@@ -73,7 +73,10 @@
 ## SRS
 
 ## DB Modeling
-
+[DB Modelling](https://github.com/EncoreFinal2Team/WebProject-Design/wiki/DB-Modeling)
 ## Usecase Diagram
-
+[SRS](https://github.com/EncoreFinal2Team/WebProject-Design/wiki/SRS)
 ## Business Logic
+[BusinessLogic]()
+## UsecaseDiagram
+[UsecaseDiagram](https://github.com/EncoreFinal2Team/WebProject-Design/wiki/UsecaseDiagram)
