@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="commentMapper">
+	<!-- Comment ResultMap -->
+	<resultMap type="commentVO" id="commentRM">
+		<id column="comment_idx" property="commentIdx" />
+		<result column="comment_content" property="commentContent" />
+		<result column="upload_date" property="uploadDate" />
+		<result column="update_date" property="updateDate" />
+		<result column="comment_user_idx" property="userIdx" />
+		<result column="comment_board_idx" property="boardIdx" />
+		<result column="comment_like_idx" property="boardIdx" />
+		<result column="comment_like" property="commentLike" />
+		<result column="comment_delete" property="commentDelete" />
+		<association property="authVO" javaType="authVO">
+			<id column="user_idx" property="userIdx" />
+			<result column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="password" property="password"/>
+			<result column="email" property="email"/>
+			<result column="nickname" property="nickname"/>
+			<result column="birthdate" property="birthdate"/>
+		</association>
+	</resultMap>
+
+	<!-- Comment_Like ResultMap -->
+	<resultMap type="commentLikeVO" id="commentLikeRM">
+		<id column="comment_like_idx" property="commentLikeIdx" />
+		<result column="comment_like_comment_idx" property="commentIdx" />
+		<result column="comment_like_user_idx" property="userIdx" />
+		<result column="comment_like_board_idx" property="boardIdx" />
+		<association property="authVO" javaType="authVO">
+			<id column="user_idx" property="userIdx" />
+			<result column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="password" property="password"/>
+			<result column="email" property="email"/>
+			<result column="nickname" property="nickname"/>
+			<result column="birthdate" property="birthdate"/>
+		</association>
+		<association property="commentVO" javaType="commentVO">
+			<id column="comment_idx" property="commentIdx" />
+			<result column="comment_content" property="commentContent" />
+			<result column="upload_date" property="uploadDate" />
+			<result column="update_date" property="updateDate" />
+			<result column="comment_user_idx" property="userIdx" />
+			<result column="comment_board_idx" property="boardIdx" />
+			<result column="comment_like" property="commentLike" />
+			<result column="comment_delete" property="commentDelete" />
+		</association>
+	</resultMap>
+
+	<!-- select sql -->
+	<sql id="select-comment">
+		SELECT c.comment_idx, c.comment_user_idx,
+		c.comment_content,
+		c.upload_date, c.update_date,
+		c.comment_board_idx,c.comment_like, c.comment_delete, 
+		u.user_idx, u.nickname
+		FROM comment c, user u
+	</sql>
+
+	<!-- 댓글 업로드 : updateDate X -->
+	<insert id="insertComment" parameterType="commentVO"
+		useGeneratedKeys="true" keyProperty="commentIdx">
+		INSERT INTO
+		comment(comment_user_idx, comment_content, upload_date,
+		comment_board_idx,comment_delete)
+		VALUES(#{userIdx}, #{commentContent}, curdate(), #{boardIdx}, 0)
+	</insert>
+
+	<!-- 댓글 출력 -->
+	<select id="selectAllComments" parameterType="hashmap"
+		resultMap="commentRM">
+		<include refid="select-comment" />
+		where c.comment_board_idx = #{boardIdx}
+		AND c.comment_user_idx =
+		u.user_idx
+		LIMIT #{limit}, 5
+	</select>
+
+	<!-- 댓글 업데이트 : content, update_date -->
+	<update id="updateComment" parameterType="commentVO">
+		UPDATE comment
+		SET
+		comment_content=#{commentContent}, update_date=curdate()
+		WHERE
+		comment_idx=#{commentIdx}
+	</update>
+
+	<!-- 댓글 삭제 -->
+	<update id="deleteComment" parameterType="int">
+		UPDATE comment
+		SET
+		comment_content='삭제된 댓글 입니다.', comment_delete='1'
+		WHERE comment_idx=#{commentIdx}
+	</update>
+
+	<!-- like -->
+	<insert id="insertCommentLike" parameterType="commentLikeVO"
+		useGeneratedKeys="true" keyProperty="commentLikeIdx">
+		INSERT INTO
+		comment_like(comment_like_comment_idx, comment_like_user_idx, comment_like_board_idx)
+		VALUES(#{commentIdx}, #{userIdx}, #{boardIdx})
+	</insert>
+	<delete id="deleteCommentLike" parameterType="commentLikeVO">
+		DELETE FROM
+		comment_like
+		WHERE comment_like_user_idx = #{userIdx}
+		AND
+		comment_like_comment_idx = #{commentIdx}
+	</delete>
+
+	<!-- 댓글 좋아요 여부 확인 -->
+	<select id="checkCommentLike" parameterType="commentLikeVO"
+		resultMap="commentLikeRM">
+		SELECT comment_like_idx
+		FROM comment_like
+		WHERE comment_like_comment_idx=#{commentIdx}
+		AND comment_like_user_idx=#{userIdx}
+		AND comment_like_board_idx=#{boardIdx}
+	</select>
+
+	<!-- 댓글 좋아요 업데이트 -->
+	<update id="updateCommentLike" parameterType="int">
+		update comment
+		set
+		comment_like=
+		(select count(*)
+		from comment_like
+		where
+		comment_like_comment_idx=#{VALUE})
+		where comment_idx = #{VALUE}
+	</update>
+	
+	<!-- 댓글 카운트 -->
+	<select id="commentCnt" parameterType="int" resultType="int">
+		select count(*) from comment where comment_board_idx=#{VALUE}
+	</select>
+
+	<select id="commentLikeList" parameterType="hashmap" resultType="int">
+		SELECT cl.comment_like_comment_idx
+		FROM comment c, comment_like cl
+		WHERE c.comment_idx = cl.comment_like_comment_idx
+		AND cl.comment_like_board_idx = #{boardIdx}
+		AND cl.comment_like_user_idx = #{userIdx}
+		AND c.comment_delete = 0
+		ORDER BY cl.comment_like_comment_idx;
+	</select>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	
+<mapper namespace="UserMapper">
+	<resultMap type="authVO" id="authRM">
+		<id column="user_idx" property="userIdx"/>
+		<result column="id" property="id"/>
+		<result column="name" property="name"/>
+		<result column="password" property="password"/>
+		<result column="email" property="email"/>
+		<result column="nickname" property="nickname"/>
+		<result column="birthdate" property="birthdate"/>
+		<result column="auth" property="auth"/>
+	</resultMap>
+	<insert id="createUser" parameterType="authVO" useGeneratedKeys="false" keyProperty="user_idx">
+		insert 
+		into user(id,name,password,email,nickname,birthdate)
+		values(#{id},#{name},#{password},#{email},#{nickname},#{birthdate})
+	</insert>
+	
+	<select id="findById" parameterType="String" resultMap="authRM">
+		select *
+		from user
+		where id = #{VALUE}
+	</select>
+	
+	<select id="nicknameCheck" parameterType="String" resultType="String">
+		select id
+		from user
+		where nickname = #{VALUE}
+	</select>
+	
+	<select id="idCheck" parameterType="String" resultType="String">
+		select id
+		from user
+		where id = #{VALUE}
+	</select>
+	
+	<select id="emailCheck" parameterType="String" resultType="String">
+		select id
+		from user
+		where email = #{VALUE}
+	</select>
+	<update id="updateUser" parameterType="authVO">
+		update user
+		set nickname=#{nickname},birthdate=#{birthdate},name=#{name}
+		where id=#{id}
+	</update>
+	
+	<update id="updatePassword" parameterType="authVO">
+		update user
+		set password=#{password}
+		where id=#{id}
+	</update>
+	<delete id="userDelete" parameterType="String">
+	delete
+	from user
+	where id=#{VALUE}
+	</delete>
+</mapper>
+
+

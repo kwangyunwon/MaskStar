@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="subCommentMapper">
+	<resultMap type="subCommentVO" id="subCommentRM">
+		<id column="subcomment_idx" property="subCommentIdx" />
+		<result column="subcomment_content" property="subCommentContent" />
+		<result column="upload_date" property="uploadDate" />
+		<result column="update_date" property="updateDate" />
+		<result column="subcomment_user_idx" property="userIdx" />
+		<result column="subcomment_comment_idx" property="commentIdx" />
+		<result column="subcomment_board_idx" property="boardIdx" />
+		<result column="subcomment_delete" property="subCommentDelete" />
+		<association property="authVO" javaType="authVO">
+			<id column="user_idx" property="userIdx" />
+			<result column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="password" property="password"/>
+			<result column="email" property="email"/>
+			<result column="nickname" property="nickname"/>
+			<result column="birthdate" property="birthdate"/>
+		</association>
+	</resultMap>
+
+	<!-- select sql -->
+	<sql id="select-subComment">
+		SELECT s.subcomment_idx, s.subcomment_user_idx,
+		s.subcomment_content, s.subcomment_comment_idx, s.subcomment_board_idx,
+		s.upload_date, s.subcomment_delete,
+		s.update_date, u.nickname
+		,u.user_idx
+		FROM
+		subcomment s, user u
+	</sql>
+
+	<!-- 대댓글 업로드 : updateDate X -->
+	<insert id="insertSubComment" parameterType="subCommentVO"
+		useGeneratedKeys="true" keyProperty="subCommentIdx">
+		INSERT INTO
+		subcomment(subcomment_user_idx, subcomment_content, upload_date,
+		subcomment_comment_idx, subcomment_board_idx, subcomment_delete)
+		VALUES(#{userIdx}, #{subCommentContent},
+		curdate(), #{commentIdx}, #{boardIdx}, 0)
+	</insert>
+
+	<!-- 댓글 출력 -->
+	<select id="selectAllSubComments" parameterType="int"
+		resultMap="subCommentRM">
+		<include refid="select-subComment" />
+		WHERE s.subcomment_board_idx = #{VALUE}
+		AND u.user_idx =
+		s.subcomment_user_idx;
+	</select>
+
+	<!-- 대댓글 업데이트 : content, update_date -->
+	<update id="updateSubComment" parameterType="subCommentVO">
+		UPDATE subcomment
+		SET
+		subcomment_content=#{subCommentContent}, update_date=curdate()
+		WHERE
+		subComment_idx=#{subCommentIdx}
+	</update>
+
+	<update id="deleteSubComment" parameterType="int">
+		UPDATE subcomment
+		SET
+		subComment_content='삭제된 댓글 입니다.', subcomment_delete=1
+		WHERE subComment_idx=#{commentIdx}
+	</update>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="boardMapper">
+
+	<!-- boardVO -->
+	<resultMap type="boardVO" id="boardRM">
+		<id column="board_idx" property="boardIdx"/>
+		<result column="board_video" property="boardVideo"/>
+		<result column="board_title" property="boardTitle"/>
+		<result column="board_singer" property="boardSinger"/>
+		<result column="board_genre" property="boardGenre"/>
+		<result column="board_count" property="boardCount"/>
+		<result column="board_like" property="boardLike"/>
+		<result column="board_content" property="boardContent"/>
+		<result column="board_link" property="boardLink"/>
+		<result column="upload_date" property="uploadDate"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="board_user_idx" property="userIdx"/>
+		<association property="authVO" javaType="authVO">
+			<id column="user_idx" property="userIdx"/>
+			<result column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="password" property="password"/>
+			<result column="email" property="email"/>
+			<result column="nickname" property="nickname"/>
+			<result column="birthdate" property="birthdate"/>
+			<result column="auth" property="auth"/>
+		</association>
+	</resultMap>
+			
+	
+	<!-- boardLikeVO  -->
+	<resultMap type="boardLikeVO" id="boardLikeRM">
+		<id column="board_like_idx" property="boardLikeIdx" />
+		<result column="board_like_board_idx" property="boardIdx" />
+		<result column="board_like_user_idx" property="userIdx" />
+		<association property="authVO" javaType="authVO">
+			<id column="user_idx" property="userIdx"/>
+			<result column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="password" property="password"/>
+			<result column="email" property="email"/>
+			<result column="nickname" property="nickname"/>
+			<result column="birthdate" property="birthdate"/>
+		</association>
+		<association property="boardVO" javaType="boardVO">
+			<id column="board_idx" property="boardIdx" />
+			<result column="board_video" property="boardVideo" />
+			<result column="board_title" property="boardTitle" />
+			<result column="board_singer" property="boardSinger" />
+			<result column="board_genre" property="boardGenre" />
+			<result column="board_count" property="boardCount" />
+			<result column="board_like" property="boardLike" />
+			<result column="board_content" property="boardContent" />
+			<result column="board_link" property="boardLink" />
+			<result column="upload_date" property="uploadDate" />
+			<result column="update_date" property="updateDate" />
+			<result column="board_user_idx" property="userIdx" />
+		</association>
+	</resultMap>
+	
+	<!-- board search sql -->
+     <sql id="select-board">
+        SELECT 
+		b.board_idx, b.board_video, b.board_title, b.board_singer, b.board_genre, b.board_count, b.board_like, b.board_content, b.board_link, b.upload_date, b.update_date, b.board_user_idx, u.user_idx, u.nickname 
+       	FROM board b
+		JOIN user u ON b.board_user_idx = u.user_idx
+    </sql>
+    
+     <sql id="select-board-rank">
+        SELECT 
+		b.board_idx, b.board_video, b.board_title, b.board_singer, b.board_genre, b.board_count, b.board_like, b.board_content, b.board_link, b.upload_date, b.update_date, b.board_user_idx, u.nickname, 
+		rank() over(order by b.board_like desc) AS ranking 
+		FROM board b
+		JOIN user u ON b.board_user_idx = u.user_idx
+    </sql>
+    
+    <sql id="select-board-rank-genre">
+        SELECT 
+		b.board_idx, b.board_video, b.board_title, b.board_singer, b.board_genre, b.board_count, b.board_like, b.board_content, b.board_link, b.upload_date, b.update_date, b.board_user_idx, u.nickname,  
+		rank() over( partition by b.board_genre order by b.board_like desc) AS ranking 
+		FROM board b
+		JOIN user u	ON b.board_user_idx = u.user_idx
+    </sql>   
+    
+	
+	<!-- 게시글 업로드 : like=0, count=0, updateDate X -->
+	<insert id="insertBoard" parameterType="boardVO" useGeneratedKeys="true" keyProperty="boardIdx">
+		INSERT INTO board(board_video, board_title, board_singer, board_genre, board_count, board_like, board_content, board_link, upload_date, board_user_idx)
+		VALUES(#{boardVideo}, #{boardTitle}, #{boardSinger}, #{boardGenre}, 0, 0, #{boardContent}, #{boardLink}, curdate(), #{userIdx})
+	</insert>
+
+	
+	<!-- 게시글 업데이트 : title, singer, genre, updateDate, content -->
+	<update id="updateBoard" parameterType="boardVO">
+		UPDATE board
+		SET
+		board_title=#{boardTitle}, board_singer=#{boardSinger}, board_genre=#{boardGenre}, update_date=curdate(), board_content=#{boardContent}
+		WHERE board_idx=#{boardIdx}
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deleteBoard" parameterType="int">
+		DELETE 
+		FROM board
+		WHERE
+		board_idx=#{VALUE}
+	</delete>
+	
+	<!-- 게시글 상세보기 -->
+	<select id="boardDetail" parameterType="int" resultMap="boardRM">
+		<include refid="select-board"/>
+		WHERE b.board_user_idx = u.user_idx AND b.board_idx=#{VALUE}
+	</select>
+	
+	<!-- 게시글 조회수 +1 -->
+	<update id="updateCount" parameterType="int">
+		UPDATE board
+		SET
+		board_count=board_count+1
+		WHERE board_idx=#{boardIdx}
+	</update>
+	
+	
+	<!-- 좋아요 테이블에 좋아요 정보 추가 -->
+	<insert id="insertBoardLike" parameterType="boardLikeVO" useGeneratedKeys="true" keyColumn="board_like_idx">
+		INSERT INTO board_like(board_like_board_idx, board_like_user_idx)
+		VALUES(#{boardIdx}, #{userIdx})
+	</insert>
+	
+	<!-- 좋아요 테이블에 좋아요 정보 삭제 -->
+	<delete id="deleteBoardLike" parameterType="boardLikeVO">
+		DELETE FROM board_like
+		WHERE board_like_board_idx=#{boardIdx} AND board_like_user_idx=#{userIdx}
+	</delete>
+	
+	<!-- 게시글 좋아요 추가 or 삭제 -->
+	<update id="updateLike" parameterType="int">
+		UPDATE board 
+		SET board_like=(SELECT COUNT(*) 
+    		FROM board_like 
+    		WHERE board_like_board_idx=#{VALUE}) 
+		WHERE board_idx = #{VALUE}
+	</update>
+	
+	<!-- 게시글 좋아요 여부 확인 -->
+	<select id="checkLike" parameterType="boardLikeVO" resultMap="boardLikeRM">
+		SELECT board_like_idx
+		FROM board_like
+		WHERE board_like_board_idx=#{boardIdx} AND board_like_user_idx=#{userIdx}
+	</select>
+
+
+	<select id="topRankAll" parameterType="boardVO" resultMap="boardRM">
+		<include refid="select-board-rank"/>
+		<![CDATA[HAVING TIMESTAMPDIFF(DAY,  b.upload_date , curdate()) < 70]]>       
+		LIMIT 5
+	</select>
+		
+	
+	<select id="topRankGenre" parameterType="boardVO" resultMap="boardRM">
+		<include refid="select-board-rank-genre"/>
+		<![CDATA[WHERE TIMESTAMPDIFF(DAY,  b.upload_date , curdate()) < 70]]>     
+		AND b.board_genre=#{value}  
+		LIMIT 5
+	</select>
+	
+	
+	<select id="selectGenre" parameterType="java.util.HashMap" resultMap="boardRM">
+        <choose>
+        	<when test='sort=="RANK"'>
+          		<include refid="select-board-rank-genre"/>
+          		where b.board_genre=#{genre}    
+          	</when>
+          
+          	<when test='sort=="IDX"'>
+          		<include refid="select-board"/>
+          		where b.board_genre=#{genre} 
+        		ORDER BY b.board_idx desc  
+          	</when>          
+        </choose>
+          
+        LIMIT #{start}, 5
+    </select>
+
+	
+	<select id="searchNickname" parameterType="java.util.HashMap" resultMap="boardRM">
+        <choose>
+        	<when test='sort=="RANK"'>
+          		<include refid="select-board-rank"/>
+          		WHERE u.nickname LIKE '%${keyword}%'
+          		<if test='genre!=null'>
+        			AND b.board_genre=#{genre}
+				</if>    
+          	</when>
+          
+          	<when test='sort=="IDX"'>
+          		<include refid="select-board"/>
+          		WHERE u.nickname LIKE '%${keyword}%'
+          		<if test='genre!=null'>
+        			AND b.board_genre=#{genre}
+				</if>
+        		ORDER BY b.board_idx desc  
+          	</when>
+          	<when test='sort=="MY"'>
+          		<include refid="select-board"/>
+          		WHERE u.nickname LIKE #{keyword}
+        		ORDER BY b.board_idx desc  
+          	</when>          
+        </choose>          
+        LIMIT #{start}, 5
+    </select>
+
+	<select id="searchTitle" parameterType="java.util.HashMap" resultMap="boardRM">
+        <choose>
+        	<when test='sort=="RANK"'>
+          		<include refid="select-board-rank"/>
+          		WHERE b.board_title LIKE '%${keyword}%'
+          		<if test='genre!=null'>
+        			AND b.board_genre=#{genre}
+				</if>    
+          	</when>
+          
+          	<when test='sort=="IDX"'>
+          		<include refid="select-board"/>
+          		WHERE b.board_title LIKE '%${keyword}%'
+          		<if test='genre!=null'>
+        			AND b.board_genre=#{genre}
+				</if>
+        		ORDER BY b.board_idx desc  
+          	</when>          
+        </choose>          
+        LIMIT #{start}, 5
+    </select>
+    
+    <select id="searchSinger" parameterType="java.util.HashMap" resultMap="boardRM">
+        <choose>
+        	<when test='sort=="RANK"'>
+          		<include refid="select-board-rank"/>
+          		WHERE b.board_singer LIKE '%${keyword}%'
+          		<if test='genre!=null'>
+        			AND b.board_genre=#{genre}
+				</if>    
+          	</when>
+          
+          	<when test='sort=="IDX"'>
+          		<include refid="select-board"/>
+          		WHERE b.board_singer LIKE '%${keyword}%'
+          		<if test='genre!=null'>
+        			AND b.board_genre=#{genre}
+				</if>
+        		ORDER BY b.board_idx desc  
+          	</when>          
+        </choose>          
+        LIMIT #{start}, 5
+    </select>
+	
+</mapper>
+

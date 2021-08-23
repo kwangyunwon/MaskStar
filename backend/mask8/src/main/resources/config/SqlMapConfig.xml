@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<typeAliases>
+		<package name="com.mask8.backend.domain" />
+	</typeAliases>
+
+	<mappers>
+		<mapper resource="sql/user-mapping.xml"/>
+		<mapper resource="sql/board-mapping.xml" />
+		<mapper resource="sql/comment-mapping.xml" />
+		<mapper resource="sql/subcomment-mapping.xml" />
+
+	</mappers>
+</configuration>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
