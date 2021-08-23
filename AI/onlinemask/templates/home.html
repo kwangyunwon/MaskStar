@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<body>
+
+    {% block body %}
+    <h1>신체 인식</h1>
+    <table>
+        <tr>
+            <td width="50%">
+                <img src="http://127.0.0.1:8000/sticker" style="width:500px;" />
+            </td>
+            <td width="50%">
+                My Video
+            </td>
+        </tr>
+    </table>
+    {% endblock %}
+    <a href="http://127.0.0.1:8000/stop">클릭</a>
+    <input type=checkbox id="chk-hear-mic"><label for="chk-hear-mic">마이크 소리 듣기</label>
+    <button id="record">녹음</button>
+    <button id="stop">정지</button>
+    <div id="sound-clips"></div>
+
+    <script>
+        const record = document.getElementById("record")
+        const stop = document.getElementById("stop")
+        const soundClips = document.getElementById("sound-clips")
+        const chkHearMic = document.getElementById("chk-hear-mic")
+
+        const audioCtx = new(window.AudioContext || window.webkitAudioContext)() // 오디오 컨텍스트 정의
+
+        const analyser = audioCtx.createAnalyser()
+
+        function makeSound(stream) {
+            const source = audioCtx.createMediaStreamSource(stream)
+
+            source.connect(analyser)
+                //            analyser.connect(distortion)
+                //            distortion.connect(biquadFilter)
+                //            biquadFilter.connect(gainNode)
+                //            gainNode.connect(audioCtx.destination) // connecting the different audio graph nodes together
+            analyser.connect(audioCtx.destination)
+
+        }
+
+        if (navigator.mediaDevices) {
+            console.log('getUserMedia supported.')
+
+            const constraints = {
+                audio: true,
+                video: false
+            }
+            let chunks = []
+
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+
+                    const mediaRecorder = new MediaRecorder(stream, {
+                        type: 'audio/wav'
+                    })
+
+                    chkHearMic.onchange = e => {
+                        if (e.target.checked == true) {
+                            audioCtx.resume()
+                            makeSound(stream)
+                        } else {
+                            audioCtx.suspend()
+                        }
+                    }
+
+                    record.onclick = () => {
+
+                        const data = new FormData();
+                        data.append("filename", "C:/encore_bjy/00_FinalProjectWorkspace/FE/result/" + "temp_video1" + ".mp4")
+
+                        xhr1 = new XMLHttpRequest();
+                        xhr1.onreadystatechange = callback1;
+
+                        xhr1.open("post", "http://127.0.0.1:8000/record");
+
+                        xhr1.send(data);
+
+                        mediaRecorder.start()
+                        console.log(mediaRecorder.state)
+                        console.log("recorder started")
+                        record.style.background = "red"
+                        record.style.color = "black"
+
+                    }
+
+                    stop.onclick = () => {
+                        mediaRecorder.stop()
+                        console.log(mediaRecorder.state)
+                        console.log("recorder stopped")
+                        record.style.background = ""
+                        record.style.color = ""
+                    }
+
+                    mediaRecorder.onstop = e => {
+                        // console.log("data available after MediaRecorder.stop() called.")
+
+                        // const clipName = prompt("오디오 파일 제목을 입력하세요.", new Date())
+
+                        // const clipContainer = document.createElement('article')
+                        // const clipLabel = document.createElement('p')
+                        // const audio = document.createElement('audio')
+                        // const deleteButton = document.createElement('button')
+
+                        // clipContainer.classList.add('clip')
+                        // audio.setAttribute('controls', '')
+                        // deleteButton.innerHTML = "삭제"
+                        // clipLabel.innerHTML = clipName
+
+                        // clipContainer.appendChild(audio)
+                        // clipContainer.appendChild(clipLabel)
+                        // clipContainer.appendChild(deleteButton)
+                        // soundClips.appendChild(clipContainer)
+
+                        // audio.controls = true
+                        // const blob = new Blob(chunks, {
+                        //     'type': 'audio/wav; codecs=0'
+                        // })
+                        // chunks = []
+                        // const audioURL = URL.createObjectURL(blob)
+                        // audio.src = audioURL
+                        // console.log("recorder stopped")
+
+                        // deleteButton.onclick = e => {
+                        //     evtTgt = e.target
+                        //     evtTgt.parentNode.parentNode.removeChild(evtTgt.parentNode)
+                        // }
+
+
+                        let blob = new Blob(chunks, {
+                            type: 'audio/wav; codecs=0'
+                        })
+                        chunks = []
+                        const data = new FormData();
+
+                        data.append('filename', 'C:/encore_bjy/00_FinalProjectWorkspace/FE/result/'+'temp_audio1.wav')
+                        data.append('data', blob)
+
+                        xhr = new XMLHttpRequest();
+                        xhr1 = new XMLHttpRequest();
+
+                        xhr.onreadystatechange = callback;
+                        xhr1.onreadystatechange = callback1;
+
+                        xhr.open("post", "http://127.0.0.1:8000/audio_save");
+                        xhr1.open("get", "http://127.0.0.1:8000/record_stop");
+
+                        xhr.send(data);
+                        xhr1.send(null);
+
+                    }
+
+                    mediaRecorder.ondataavailable = e => {
+                        chunks.push(e.data)
+                    }
+                })
+                .catch(err => {
+                    console.log('The following error occurred: ' + err)
+                })
+        }
+
+        function callback() {
+            if (xhr.readystate == 4) {
+                if (xhr.status == 200) {
+                    console.log("sucess");
+                }
+            }
+        }
+
+
+        function callback1() {
+            if (xhr1.readystate == 4) {
+                if (xhr1.status == 200) {
+                    console.log("sucess");
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
