@@ -23,20 +23,20 @@
 |name|Version|
 |------|---|
 |Python3|3.8|
-|Django||
-|MySQL||
+|Django|2.2.5|
+
 ### Front-end
 |name|version|
 |-------|----|
-|Vue.js||
+|Vue.js|2.0|
 |Vuetify||
 
 ### AWS INFRA
 |AWS|Version|
 |-------|----|
-|AWS EC2||
+|AWS EC2|18.04|
 |AWS S3||
-|AWS RDS||
+|AWS RDS|8.0.21/Mysql|
 |Ngnix||
 |Uwsgi||
 |Tomcat|8.5|
